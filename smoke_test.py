@@ -1,0 +1,135 @@
+import base64
+import json
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from http.cookiejar import CookieJar
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parent
+BASE_URL = "http://127.0.0.1:8765"
+
+
+def build_client():
+    jar = CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+    return opener
+
+
+def fetch(opener, path: str, data: dict | None = None):
+    request = urllib.request.Request(f"{BASE_URL}{path}")
+    if data is not None:
+        encoded = json.dumps(data).encode("utf-8")
+        request.data = encoded
+        request.add_header("Content-Type", "application/json")
+        request.method = "POST"
+    with opener.open(request, timeout=12) as response:
+        payload = response.read().decode("utf-8")
+        content_type = response.headers.get("Content-Type", "")
+    if "application/json" in content_type:
+        return json.loads(payload)
+    return payload
+
+
+def wait_for_server(opener) -> None:
+    last_error = None
+    for _ in range(30):
+        try:
+            content = fetch(opener, "/api/health")
+            if content:
+                return
+        except (urllib.error.URLError, ConnectionError) as exc:
+            last_error = exc
+            time.sleep(0.5)
+    raise RuntimeError(f"Server did not become ready in time: {last_error}")
+
+
+def login(opener, email: str, password: str):
+    return fetch(opener, "/api/login", {"email": email, "password": password})
+
+
+def main() -> None:
+    process = subprocess.Popen([sys.executable, "server.py"], cwd=ROOT)
+    opener = build_client()
+
+    try:
+        wait_for_server(opener)
+        health = fetch(opener, "/api/health")
+        guest_bootstrap = fetch(opener, "/api/bootstrap")
+        html = fetch(opener, "/")
+
+        marketing_login = login(opener, "marketing@altiusnxt.local", "Marketing123!")
+        marketing_bootstrap = fetch(opener, "/api/bootstrap")
+        marketing_chat = fetch(
+            opener,
+            "/api/chat",
+            {
+                "copilot": "marketing",
+                "message": "Create a short campaign brief for product data enrichment.",
+                "conversation": [],
+            },
+        )
+        draft_save = fetch(
+            opener,
+            "/api/drafts/save",
+            {
+                "title": "Marketing smoke draft",
+                "copilot": "marketing",
+                "content": marketing_chat["answer"],
+                "sources": marketing_chat["sources"],
+                "mode": marketing_chat["mode"],
+            },
+        )
+        upload_payload = base64.b64encode(b"Candidate: Jane Doe\nExperience: B2B content marketing and industrial catalog writing").decode("ascii")
+        upload = fetch(
+            opener,
+            "/api/upload",
+            {
+                "fileName": "candidate-note.txt",
+                "mimeType": "text/plain",
+                "contentBase64": upload_payload,
+                "category": "Recruiting note",
+                "visibility": "shared",
+            },
+        )
+        fetch(opener, "/api/logout", {})
+
+        hr_opener = build_client()
+        login(hr_opener, "hr@altiusnxt.local", "HR12345!")
+        hr_bootstrap = fetch(hr_opener, "/api/bootstrap")
+        hr_chat = fetch(
+            hr_opener,
+            "/api/chat",
+            {
+                "copilot": "hr",
+                "message": "Create a first-round interview kit for a B2B content marketing manager.",
+                "conversation": [],
+            },
+        )
+
+        print("Health:", health)
+        print("HTML route ok:", "AltiusNxt Team Copilot" in html)
+        print("Guest authenticated:", guest_bootstrap["authenticated"])
+        print("Marketing login user:", marketing_login["user"]["email"])
+        print("Marketing templates:", len(marketing_bootstrap["templates"]))
+        print("Draft count after save:", len(draft_save["drafts"]))
+        print("Knowledge count after upload:", len(upload["knowledge"]))
+        print("HR authenticated:", hr_bootstrap["authenticated"])
+        print("HR knowledge visible:", len(hr_bootstrap["knowledge"]))
+        print("Marketing chat mode:", marketing_chat["mode"])
+        print("Marketing preview:", marketing_chat["answer"][:150].replace("\n", " "))
+        print("HR preview:", hr_chat["answer"][:150].replace("\n", " "))
+        print("Smoke test passed.")
+    finally:
+        process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+
+
+if __name__ == "__main__":
+    main()

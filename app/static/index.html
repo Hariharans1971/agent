@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AltiusNxt Team Copilot</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <div class="brand-mark">AN</div>
+        <div>
+          <p class="eyebrow">Internal Workspace</p>
+          <h1>AltiusNxt Team Copilot</h1>
+        </div>
+      </div>
+
+      <div class="user-card" id="user-card">
+        <p class="eyebrow">Session</p>
+        <strong id="user-name">Not signed in</strong>
+        <span id="user-role">Choose a role to begin</span>
+        <span id="user-email" class="user-email">No active session</span>
+        <button class="ghost-button sidebar-action" id="logout-button" type="button">Logout</button>
+      </div>
+
+      <nav class="nav-list">
+        <button class="nav-button active" data-view="workspace">Workspace</button>
+        <button class="nav-button" data-view="templates">Templates</button>
+        <button class="nav-button" data-view="knowledge">Knowledge Base</button>
+        <button class="nav-button" data-view="saved">Saved Drafts</button>
+        <button class="nav-button" data-view="admin">Admin</button>
+      </nav>
+
+      <section class="sidebar-panel">
+        <div class="panel-heading">
+          <h2>Recent Tasks</h2>
+        </div>
+        <ul class="task-list" id="recent-tasks"></ul>
+      </section>
+    </aside>
+
+    <main class="main-content">
+      <section class="view active" id="workspace-view">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Operational Copilot</p>
+            <h2 id="workspace-title">Choose your team workspace</h2>
+          </div>
+          <div class="status-stack">
+            <span class="status-pill" id="runtime-pill">Loading</span>
+            <span class="status-pill muted" id="access-pill">Role unset</span>
+          </div>
+        </header>
+
+        <div class="workspace-grid">
+          <section class="chat-column">
+            <div class="team-selector">
+              <button class="team-card active" data-copilot="marketing" id="marketing-card">
+                <p class="eyebrow">Marketing</p>
+                <strong>Marketing Copilot</strong>
+                <span>Campaigns, landing pages, ads, SEO, sales-support content</span>
+              </button>
+              <button class="team-card" data-copilot="hr" id="hr-card">
+                <p class="eyebrow">HR</p>
+                <strong>HR Copilot</strong>
+                <span>Job descriptions, resumes, interviews, outreach, onboarding</span>
+              </button>
+            </div>
+
+            <div class="template-strip">
+              <div class="panel-heading">
+                <h3>Prompt Templates</h3>
+                <button class="ghost-button" id="open-templates-button">Open library</button>
+              </div>
+              <div class="chip-row" id="template-chips"></div>
+            </div>
+
+            <div class="chat-panel">
+              <div class="chat-thread" id="chat-thread"></div>
+
+              <form class="composer" id="chat-form">
+                <label class="visually-hidden" for="message-input">Prompt</label>
+                <textarea id="message-input" rows="5" placeholder="Ask for a landing page, a JD, an interview kit, a LinkedIn post, or paste a resume..."></textarea>
+                <div class="composer-actions">
+                  <div class="composer-meta">
+                    <span id="active-template-label">No template selected</span>
+                  </div>
+                  <div class="action-row">
+                    <button type="button" class="ghost-button" id="clear-template-button">Clear Template</button>
+                    <button type="submit" class="primary-button" id="send-button">Run Copilot</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <aside class="context-column">
+            <section class="side-panel">
+              <div class="panel-heading">
+                <h3>Source Context</h3>
+                <span class="eyebrow">Grounding</span>
+              </div>
+              <div id="source-list" class="source-list"></div>
+            </section>
+
+            <section class="side-panel">
+              <div class="panel-heading">
+                <h3>Output Actions</h3>
+                <span class="eyebrow">Draft Control</span>
+              </div>
+              <div class="action-stack">
+                <button class="secondary-button" id="save-draft-button">Save Draft</button>
+                <button class="secondary-button" id="copy-output-button">Copy Latest Output</button>
+                <button class="secondary-button" id="export-output-button">Export Markdown</button>
+              </div>
+              <p class="panel-note" id="output-note">Your latest assistant draft will appear here after the first response.</p>
+            </section>
+
+            <section class="side-panel">
+              <div class="panel-heading">
+                <h3>Task History</h3>
+                <span class="eyebrow">This session</span>
+              </div>
+              <ul class="task-list" id="session-history"></ul>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="templates-view">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Template Library</p>
+            <h2>Reusable Workflows</h2>
+          </div>
+          <input class="search-input" id="template-search" type="search" placeholder="Search templates">
+        </header>
+        <div class="card-grid" id="template-library"></div>
+      </section>
+
+      <section class="view" id="knowledge-view">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Knowledge Base</p>
+            <h2>Approved Source Material</h2>
+          </div>
+          <input class="search-input" id="knowledge-search" type="search" placeholder="Search sources">
+        </header>
+        <div class="admin-grid">
+          <section class="side-panel">
+            <div class="panel-heading">
+              <h3>Upload Source Document</h3>
+              <span class="eyebrow">Role aware</span>
+            </div>
+            <form id="upload-form" class="admin-form">
+              <input id="upload-file" type="file" required>
+              <input id="upload-category" type="text" placeholder="Category">
+              <select id="upload-visibility"></select>
+              <button class="primary-button" type="submit">Upload and Index</button>
+            </form>
+            <p class="panel-note" id="upload-note">Upload .txt, .md, .json, .csv, .tsv, .html, .docx, or .pdf documents.</p>
+          </section>
+          <section>
+            <div class="knowledge-grid" id="knowledge-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="saved-view">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Saved Drafts</p>
+            <h2>Reusable Outputs</h2>
+          </div>
+          <button class="ghost-button" id="clear-drafts-button">Clear All Drafts</button>
+        </header>
+        <div class="card-grid" id="saved-drafts"></div>
+      </section>
+
+      <section class="view" id="admin-view">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Admin</p>
+            <h2>Knowledge and Template Controls</h2>
+          </div>
+        </header>
+        <div class="admin-grid">
+          <section class="side-panel">
+            <div class="panel-heading">
+              <h3>Add Knowledge Note</h3>
+              <span class="eyebrow">Admin only</span>
+            </div>
+            <form id="knowledge-form" class="admin-form">
+              <input id="knowledge-title" type="text" placeholder="Note title">
+              <input id="knowledge-category" type="text" placeholder="Category">
+              <select id="knowledge-visibility"></select>
+              <textarea id="knowledge-content" rows="8" placeholder="Paste a process note, policy detail, or approved company context"></textarea>
+              <button class="primary-button" type="submit">Save Knowledge Note</button>
+            </form>
+            <p class="panel-note" id="admin-note">Only admin users can save new notes.</p>
+          </section>
+
+          <section class="side-panel">
+            <div class="panel-heading">
+              <h3>Template Manager</h3>
+              <span class="eyebrow">Reference</span>
+            </div>
+            <div id="admin-template-summary" class="template-summary"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="login-modal">
+    <div class="modal-card">
+      <p class="eyebrow">Start Session</p>
+      <h2>Enter the AltiusNxt workspace</h2>
+      <p class="modal-copy">Sign in with a local demo account to unlock the right copilot workspace. HR content remains restricted to HR or admin sessions.</p>
+      <form id="login-form" class="login-form">
+        <input id="login-email" type="email" placeholder="Email" required>
+        <input id="login-password" type="password" placeholder="Password" required>
+        <button class="primary-button" type="submit">Open Workspace</button>
+      </form>
+      <div class="demo-accounts" id="demo-accounts"></div>
+    </div>
+  </div>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
