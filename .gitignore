@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+*.err
+
+# Database
+*.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Virtual env
+venv/
+env/
+
+# Chrome junk
+chrome-*/
+
+# Uploads (optional)
+app/uploads/
