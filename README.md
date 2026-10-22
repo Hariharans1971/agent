@@ -1,81 +1,57 @@
-# AltiusNxt Team Copilot
+# AltiusNxt Team Copilot — Portfolio Demo
 
-Local internal copilot app for AltiusNxt with two team-specific workspaces:
-- Marketing Copilot
-- HR Copilot
+A local Python application demonstrating a two-workspace copilot concept for marketing and HR workflows. It includes draft generation, a local knowledge base, document indexing, task history, and an optional model-provider integration.
 
-The app runs without external dependencies and uses a grounded local mode by default. If you set `OPENAI_API_KEY`, it will automatically use the OpenAI Responses API for live model output.
+> **Security and scope:** This repository is a portfolio/demo project. Do not use it with real employee, applicant, customer, or company-confidential data. Review authorization, session handling, prompt-injection defenses, logging, and data retention before any shared deployment. No credentials should be published in this README.
 
-## What It Includes
-- Marketing workspace for landing pages, campaigns, SEO briefs, ad copy, LinkedIn posts, and email drafts
-- HR workspace for job descriptions, resume summaries, interview kits, onboarding checklists, and candidate outreach
-- Approved-source knowledge base seeded with AltiusNxt company facts and the workspace strategy docs
-- SQLite-backed users, sessions, drafts, task history, and indexed uploaded documents
-- Role-aware knowledge visibility, protected HR workspace access, and admin-managed knowledge notes
-- Saved drafts, task history, template library, file upload, and admin note management
+## Features
 
-## Run The App
-1. Open a terminal in this folder.
-2. Run:
+- Marketing and HR workflow prototypes
+- Local knowledge base and document indexing
+- Saved drafts and task history
+- Optional OpenAI API integration via environment variables
+- Local health/status utilities and smoke-test script
+
+## Run locally
+
+Use a supported Python 3 version and install the dependencies listed in the repository's requirements file, if present.
 
 ```powershell
 python launch_agent.py
 ```
 
-3. Open:
+Then open `http://127.0.0.1:8765`.
 
-```text
-http://127.0.0.1:8765
-```
+If the launcher is unavailable in your checkout, inspect `server.py` and the current project structure before running the server directly.
 
-## Demo Accounts
+## Optional model integration
 
-Use one of these local accounts on the login screen:
-
-```text
-marketing@altiusnxt.local / Marketing123!
-hr@altiusnxt.local / HR12345!
-admin@altiusnxt.local / Admin12345!
-```
-
-## Optional Live AI Mode
-Set an API key before starting the server:
+Set your own API key in the local environment. Never commit it or place it in source code.
 
 ```powershell
-$env:OPENAI_API_KEY="your_api_key_here"
+$env:OPENAI_API_KEY = "your-local-key"
 python launch_agent.py
 ```
 
-The app defaults to `gpt-5-mini` and can be changed with:
+The model can be configured through `ALTIUS_MODEL` if supported by the installed version. Check provider documentation and current model availability before configuring a deployment.
 
-```powershell
-$env:ALTIUS_MODEL="gpt-5.2"
-```
-
-## Quick Launcher
-You can also run:
-
-```powershell
-.\run_agent.bat
-```
-
-## Server Controls
-
-Check status:
-
-```powershell
-python agent_status.py
-```
-
-Stop the running server:
-
-```powershell
-python stop_agent.py
-```
-
-## Smoke Test
-To verify the server, auth flow, UI bootstrap, Marketing Copilot, HR Copilot, draft persistence, and upload indexing in one shot:
+## Smoke test
 
 ```powershell
 python smoke_test.py
 ```
+
+Run this only after reviewing the script and installing the project's dependencies.
+
+## Before any deployment
+
+- Replace demo authentication with securely managed credentials and password hashing.
+- Enforce authorization checks on every protected operation and document access.
+- Use a secret manager or environment variables for provider keys.
+- Add CSRF protections where applicable, rate limiting, upload validation, and safe file handling.
+- Avoid embedding internal company information or real user data in a public repository.
+- Add automated tests for authentication, role isolation, API errors, and document permissions.
+
+## License and attribution
+
+Check the repository's current license and confirm that all included company-specific materials are authorized for public distribution before reusing or deploying them.
