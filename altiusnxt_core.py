@@ -110,24 +110,26 @@ def can_access_copilot(role: str, copilot: str) -> bool:
     return role in {"marketing", "hr", "admin"}
 
 
+# Local demo users are created only when the matching password environment
+# variable is set. Never ship reusable default passwords in source control.
 DEFAULT_USERS = [
     {
         "name": "Marketing Demo",
-        "email": "marketing@altiusnxt.local",
+        "email": os.getenv("COPILOT_MARKETING_EMAIL", "marketing@altiusnxt.local"),
         "role": "marketing",
-        "password": "Marketing123!",
+        "password_env": "COPILOT_MARKETING_PASSWORD",
     },
     {
         "name": "HR Demo",
-        "email": "hr@altiusnxt.local",
+        "email": os.getenv("COPILOT_HR_EMAIL", "hr@altiusnxt.local"),
         "role": "hr",
-        "password": "HR12345!",
+        "password_env": "COPILOT_HR_PASSWORD",
     },
     {
         "name": "Admin Demo",
-        "email": "admin@altiusnxt.local",
+        "email": os.getenv("COPILOT_ADMIN_EMAIL", "admin@altiusnxt.local"),
         "role": "admin",
-        "password": "Admin12345!",
+        "password_env": "COPILOT_ADMIN_PASSWORD",
     },
 ]
 
@@ -321,6 +323,9 @@ class Storage:
             if existing:
                 return
             for user in DEFAULT_USERS:
+                password = os.getenv(user["password_env"], "")
+                if not password:
+                    continue
                 salt = secrets.token_hex(16)
                 conn.execute(
                     """
@@ -332,7 +337,7 @@ class Storage:
                         user["email"].lower(),
                         user["role"],
                         salt,
-                        self._hash_password(user["password"], salt),
+                        self._hash_password(password, salt),
                         utc_now_iso(),
                     ),
                 )
