@@ -1,0 +1,84 @@
+name: Remove historical browser and upload artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_rewrite:
+        description: "Confirm you reviewed these generated artifacts and approve rewriting main history (commit IDs will change)."
+        required: true
+        type: choice
+        default: "no"
+        options:
+          - "no"
+          - "yes"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sanitize-history-agent
+  cancel-in-progress: false
+
+jobs:
+  confirm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require explicit history rewrite confirmation
+        env:
+          CONFIRM_REWRITE: ${{ inputs.confirm_rewrite }}
+          REF_NAME: ${{ github.ref }}
+        run: |
+          set -Eeuo pipefail
+          if [ "$CONFIRM_REWRITE" != "yes" ]; then
+            echo "::error::No history changes were made. Select yes only after reviewing the target paths."
+            exit 1
+          fi
+          if [ "$REF_NAME" != "refs/heads/main" ]; then
+            echo "::error::Run this workflow from the main branch only."
+            exit 1
+          fi
+
+  rewrite:
+    needs: confirm
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Check out complete repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Confirm current tree is already clean
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if git ls-tree -r --name-only HEAD | grep -E '^(chrome-preview-profile/|app/uploads/)'; then
+            echo "::error::Target paths exist in the current tree. Stop and review before history rewrite."
+            exit 1
+          fi
+          echo "Current tree is clean; only historical browser-profile and upload artifacts will be removed."
+
+      - name: Remove historical runtime artifacts from every commit
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          original_head="$GITHUB_SHA"
+          python -m pip install --disable-pip-version-check git-filter-repo
+          git filter-repo --force --path chrome-preview-profile/ --path app/uploads/ --invert-paths
+
+          if git log --all --format= --name-only | grep -E '^(chrome-preview-profile/|app/uploads/)'; then
+            echo "::error::Sanitized history still contains a target path; refusing to push."
+            exit 1
+          fi
+
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          auth_header="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth_header" \
+            push --force-with-lease="refs/heads/main:$original_head" origin HEAD:refs/heads/main
+
+          echo "History rewritten and pushed with force-with-lease. Commit IDs changed; current application source was preserved."
+        env:
+          GH_TOKEN: ${{ github.token }}
