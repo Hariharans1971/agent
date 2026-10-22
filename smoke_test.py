@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 import subprocess
 import sys
 import time
@@ -52,6 +53,16 @@ def login(opener, email: str, password: str):
 
 
 def main() -> None:
+    marketing_email = os.getenv("COPILOT_MARKETING_EMAIL", "marketing@altiusnxt.local")
+    marketing_password = os.getenv("COPILOT_MARKETING_PASSWORD", "")
+    hr_email = os.getenv("COPILOT_HR_EMAIL", "hr@altiusnxt.local")
+    hr_password = os.getenv("COPILOT_HR_PASSWORD", "")
+    if not marketing_password or not hr_password:
+        raise SystemExit(
+            "Set COPILOT_MARKETING_PASSWORD and COPILOT_HR_PASSWORD in your local "
+            "environment before running the smoke test. Do not use committed default passwords."
+        )
+
     process = subprocess.Popen([sys.executable, "server.py"], cwd=ROOT)
     opener = build_client()
 
@@ -61,7 +72,7 @@ def main() -> None:
         guest_bootstrap = fetch(opener, "/api/bootstrap")
         html = fetch(opener, "/")
 
-        marketing_login = login(opener, "marketing@altiusnxt.local", "Marketing123!")
+        marketing_login = login(opener, marketing_email, marketing_password)
         marketing_bootstrap = fetch(opener, "/api/bootstrap")
         marketing_chat = fetch(
             opener,
@@ -98,7 +109,7 @@ def main() -> None:
         fetch(opener, "/api/logout", {})
 
         hr_opener = build_client()
-        login(hr_opener, "hr@altiusnxt.local", "HR12345!")
+        login(hr_opener, hr_email, hr_password)
         hr_bootstrap = fetch(hr_opener, "/api/bootstrap")
         hr_chat = fetch(
             hr_opener,
