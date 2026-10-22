@@ -1,24 +1,34 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Logs
+# Logs and runtime files
 *.log
 *.err
+*.pid
 
-# Database
+# Local databases and uploads
 *.db
+app/data/
+app/uploads/
 
-# OS
-.DS_Store
-Thumbs.db
+# Secrets
+.env
+.env.*
+!.env.example
 
-# Virtual env
+# Virtual environments
+.venv/
 venv/
 env/
 
-# Chrome junk
-chrome-*/
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
 
-# Uploads (optional)
-app/uploads/
+# Browser test artifacts
+chrome-*/
