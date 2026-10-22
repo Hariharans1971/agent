@@ -28,6 +28,19 @@ If the launcher is unavailable in your checkout, inspect `server.py` and the cur
 
 Set your own API key in the local environment. Never commit it or place it in source code.
 
+### Configure local demo users
+
+On a fresh database, user accounts are seeded only when the corresponding password variables are set. Set strong local-only passwords before starting the server; the bootstrap API no longer returns passwords.
+
+```powershell
+$env:COPILOT_MARKETING_PASSWORD = "choose-a-strong-local-password"
+$env:COPILOT_HR_PASSWORD = "choose-another-strong-local-password"
+$env:COPILOT_ADMIN_PASSWORD = "choose-a-third-strong-local-password"
+python launch_agent.py
+```
+
+These are placeholders, not usable credentials. Existing local databases created with older demo defaults should be reset or have their passwords rotated. Never expose the app to the public internet without a security review.
+
 ```powershell
 $env:OPENAI_API_KEY = "your-local-key"
 python launch_agent.py
