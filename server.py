@@ -23,13 +23,6 @@ from altiusnxt_core import (
 
 mimetypes.add_type("application/javascript", ".js")
 SESSION_COOKIE = "altius_session"
-LOGIN_HINTS = [
-    {"role": "marketing", "email": "marketing@altiusnxt.local", "password": "Marketing123!"},
-    {"role": "hr", "email": "hr@altiusnxt.local", "password": "HR12345!"},
-    {"role": "admin", "email": "admin@altiusnxt.local", "password": "Admin12345!"},
-]
-
-
 class AppHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(STATIC_ROOT), **kwargs)
@@ -114,7 +107,6 @@ class AppHandler(SimpleHTTPRequestHandler):
                 },
             ],
             "visibilityOptions": allowed_visibility_for_role(role),
-            "loginHints": LOGIN_HINTS,
         }
         return self._send_json(payload)
 
