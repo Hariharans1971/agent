@@ -52,6 +52,18 @@ def login(opener, email: str, password: str):
     return fetch(opener, "/api/login", {"email": email, "password": password})
 
 
+def expect_http_error(opener, path: str, data: dict, expected_status: int) -> None:
+    try:
+        fetch(opener, path, data)
+    except urllib.error.HTTPError as exc:
+        if exc.code != expected_status:
+            raise AssertionError(
+                f"{path} returned HTTP {exc.code}; expected {expected_status}."
+            ) from exc
+        return
+    raise AssertionError(f"{path} unexpectedly succeeded; expected HTTP {expected_status}.")
+
+
 def main() -> None:
     marketing_email = os.getenv("COPILOT_MARKETING_EMAIL", "marketing@altiusnxt.local")
     marketing_password = os.getenv("COPILOT_MARKETING_PASSWORD", "")
@@ -70,10 +82,24 @@ def main() -> None:
         wait_for_server(opener)
         health = fetch(opener, "/api/health")
         guest_bootstrap = fetch(opener, "/api/bootstrap")
+        expect_http_error(
+            opener,
+            "/api/chat",
+            {"copilot": "marketing", "message": "This request must be rejected while logged out."},
+            401,
+        )
         html = fetch(opener, "/")
 
         marketing_login = login(opener, marketing_email, marketing_password)
+        if marketing_login.get("user", {}).get("role") != "marketing":
+            raise AssertionError("Marketing account did not receive the marketing role.")
         marketing_bootstrap = fetch(opener, "/api/bootstrap")
+        expect_http_error(
+            opener,
+            "/api/chat",
+            {"copilot": "hr", "message": "A marketing account must not access HR."},
+            403,
+        )
         marketing_chat = fetch(
             opener,
             "/api/chat",
@@ -109,7 +135,15 @@ def main() -> None:
         fetch(opener, "/api/logout", {})
 
         hr_opener = build_client()
-        login(hr_opener, hr_email, hr_password)
+        hr_login = login(hr_opener, hr_email, hr_password)
+        if hr_login.get("user", {}).get("role") != "hr":
+            raise AssertionError("HR account did not receive the HR role.")
+        expect_http_error(
+            hr_opener,
+            "/api/admin/knowledge",
+            {"title": "CI access test", "content": "This request must be rejected for non-admins."},
+            403,
+        )
         hr_bootstrap = fetch(hr_opener, "/api/bootstrap")
         hr_chat = fetch(
             hr_opener,
