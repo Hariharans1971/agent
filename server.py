@@ -23,6 +23,9 @@ from altiusnxt_core import (
 
 mimetypes.add_type("application/javascript", ".js")
 SESSION_COOKIE = "altius_session"
+MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024
+
+
 class AppHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(STATIC_ROOT), **kwargs)
@@ -248,14 +251,38 @@ class AppHandler(SimpleHTTPRequestHandler):
         return self._send_json({"status": "uploaded", "knowledge": KB.list_documents(user_role=user["role"])})
 
     def _read_json_body(self) -> dict:
-        length = int(self.headers.get("Content-Length", "0") or 0)
+        try:
+            length = int(self.headers.get("Content-Length", "0") or 0)
+        except ValueError:
+            self._send_json({"error": "Invalid Content-Length header."}, status=400)
+            raise PermissionError("Invalid Content-Length header")
+
+        if length < 0:
+            self._send_json({"error": "Invalid request body length."}, status=400)
+            raise PermissionError("Invalid request body length")
+
+        if length > MAX_REQUEST_BODY_BYTES:
+            self._send_json(
+                {"error": "Request body too large. Keep requests under 10 MiB."},
+                status=413,
+            )
+            raise PermissionError("Request body too large")
+
         raw = self.rfile.read(length) if length else b"{}"
         if not raw:
             return {}
+
         try:
-            return json.loads(raw.decode("utf-8"))
-        except json.JSONDecodeError:
-            return {}
+            payload = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            self._send_json({"error": "Request body must be valid UTF-8 JSON."}, status=400)
+            raise PermissionError("Invalid JSON request body")
+
+        if not isinstance(payload, dict):
+            self._send_json({"error": "JSON request body must be an object."}, status=400)
+            raise PermissionError("JSON request body must be an object")
+
+        return payload
 
     def _require_user(self, optional: bool = False) -> dict | None:
         token = self._get_session_token()
