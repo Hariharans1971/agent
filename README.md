@@ -56,6 +56,20 @@ python smoke_test.py
 
 Run this only after reviewing the script and installing the project's dependencies.
 
+## Validation and engineering evidence
+
+The GitHub Actions workflow compiles the Python files, tests role-policy and upload limits, runs the local end-to-end smoke test, and scans the current working tree for common secret patterns. The account-wide history audit is separate and must be reviewed independently.
+
+Run the available checks locally:
+
+```bash
+python -m compileall -q server.py altiusnxt_core.py launch_agent.py smoke_test.py stop_agent.py agent_status.py
+python -m unittest discover -s tests -v
+$env:COPILOT_MARKETING_PASSWORD = "local-only-password"
+$env:COPILOT_HR_PASSWORD = "another-local-only-password"
+python smoke_test.py
+```
+
 ## Before any deployment
 
 - Replace demo authentication with securely managed credentials and password hashing.
@@ -63,7 +77,7 @@ Run this only after reviewing the script and installing the project's dependenci
 - Use a secret manager or environment variables for provider keys.
 - Add CSRF protections where applicable, rate limiting, upload validation, and safe file handling.
 - Avoid embedding internal company information or real user data in a public repository.
-- Add automated tests for authentication, role isolation, API errors, and document permissions.
+- Treat this repository as a local demo until the security gaps in [SECURITY.md](SECURITY.md) have been addressed.
 
 ## License and attribution
 
