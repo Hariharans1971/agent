@@ -672,7 +672,7 @@ class CopilotEngine:
                 answer = (
                     fallback
                     + "\n\n---\n"
-                    + f"_The live model path encountered an error and the app fell back to local grounded mode: {exc}_"
+                    + "_The live model request failed, so the app used its local grounded response instead. Check provider configuration and service status if this persists._"
                 )
                 return {"answer": answer, "sources": self._public_sources(sources), "mode": "local_fallback"}
 
