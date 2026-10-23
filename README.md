@@ -1,5 +1,7 @@
 # AltiusNxt Team Copilot — Portfolio Demo
 
+[![Validation](https://github.com/Hariharans1971/agent/actions/workflows/validate.yml/badge.svg)](https://github.com/Hariharans1971/agent/actions/workflows/validate.yml) · [Source and history audit](https://github.com/Hariharans1971/portfolio/actions/workflows/account-secret-audit.yml)
+
 A local Python application demonstrating a two-workspace copilot concept for marketing and HR workflows. It includes draft generation, a local knowledge base, document indexing, task history, and an optional model-provider integration.
 
 > **Security and scope:** This repository is a portfolio/demo project. Do not use it with real employee, applicant, customer, or company-confidential data. Review authorization, session handling, prompt-injection defenses, logging, and data retention before any shared deployment. No credentials should be published in this README.
