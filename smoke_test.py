@@ -64,6 +64,35 @@ def expect_http_error(opener, path: str, data: dict, expected_status: int) -> No
     raise AssertionError(f"{path} unexpectedly succeeded; expected HTTP {expected_status}.")
 
 
+def expect_raw_http_error(
+    opener,
+    path: str,
+    raw_body: bytes,
+    expected_status: int,
+    *,
+    declared_length: int | None = None,
+) -> None:
+    request = urllib.request.Request(
+        f"{BASE_URL}{path}",
+        data=raw_body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    if declared_length is not None:
+        request.add_header("Content-Length", str(declared_length))
+
+    try:
+        with opener.open(request, timeout=12) as response:
+            response.read()
+    except urllib.error.HTTPError as exc:
+        if exc.code != expected_status:
+            raise AssertionError(
+                f"{path} returned HTTP {exc.code}; expected {expected_status}."
+            ) from exc
+        return
+    raise AssertionError(f"{path} unexpectedly succeeded; expected HTTP {expected_status}.")
+
+
 def main() -> None:
     marketing_email = os.getenv("COPILOT_MARKETING_EMAIL", "marketing@altiusnxt.local")
     marketing_password = os.getenv("COPILOT_MARKETING_PASSWORD", "")
@@ -82,6 +111,15 @@ def main() -> None:
         wait_for_server(opener)
         health = fetch(opener, "/api/health")
         guest_bootstrap = fetch(opener, "/api/bootstrap")
+        expect_raw_http_error(opener, "/api/login", b"{", 400)
+        expect_raw_http_error(opener, "/api/login", b"[]", 400)
+        expect_raw_http_error(
+            opener,
+            "/api/login",
+            b"{}",
+            413,
+            declared_length=10 * 1024 * 1024 + 1,
+        )
         expect_http_error(
             opener,
             "/api/chat",
